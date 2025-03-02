@@ -24,7 +24,5 @@ Pour la partie 3D, il est recommandé d'utiliser un environnement virtuel
 ```bash
 python3 -m venv pyvista_env
 source pyvista_env/bin/activate
-```
-```bash
-import pyvista as pv
+pyp install pyvista
 ```
