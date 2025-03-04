@@ -8,15 +8,15 @@ Created on Tue Feb 25 10:48:56 2025
 
 """
 Equation de Poisson 2D :
-                         -Δu(x,y) = f(x,y) sur Ω = [0,1]x[0,1] ;
+                         -Δu(x,y) = f(x,y) sur Ω = [0,lx]x[0,ly] ;
                          
 avec problème de Dirichlet non-uniforme non-homogène :
     
     - u(x,y) = u_1 sur Gamma_1 = {(x, y) in Ω | (x=0, y)}
     
-    - u(x,y) = u_2 sur Gamma_2 = {(x, y) in Ω | (x=1, y)}
+    - u(x,y) = u_2 sur Gamma_2 = {(x, y) in Ω | (x=lx, y)}
     
-    - u(x,y) = u_3 sur Gamma_3 = {(x, y) in Ω | (x, y=1)}
+    - u(x,y) = u_3 sur Gamma_3 = {(x, y) in Ω | (x, y=ly)}
     
     - u(x,y) = u_4 sur Gamma_4 = {(x, y) in Ω | (x, y=0)}
 """
@@ -45,33 +45,44 @@ def f(x, y):
 #=============================================================================#
 # Définition du maillage
 #=============================================================================#
-Nx, Ny = 100, 100  # Nombre de divisions dans chaque direction
-lx, ly = 4, 1
+
+###################
+#  (n3) ---- (n4) #
+#    |  \     |   #
+#    |   \    |   #
+#    |    \   |   #
+#  (n1) ---- (n2) #
+###################
+
+Nx, Ny = 50, 50  # Nombre de divisions dans chaque direction
+lx, ly = 4, 1 # Longueur des axes x, (resp. y)
+NoN = (Nx + 1) * (Ny + 1) # Nombre de noeuds
+NoT = 2 * Nx * Ny # Nombre d'éléments
+NnpE = 3 # Nombre de noeud par élément
+Dim = 2 # Dimension du maillage
+
+# Génère une grille de coordonnée à partir des deux tableaux x et y.
+# X et Y sont des matrices de taille (Ny+1)x(Nx+1) contenant les coordonnées x et y de chaque point du maillage.
+#
+# -  X contient les coordonnées x répétées en ligne
+# 
+# -  Y contient les coordonnées y répétées en colonne
 x = np.linspace(0, lx, Nx + 1)
 y = np.linspace(0, ly, Ny + 1)
-
-X, Y = np.meshgrid(x, y) # génère une grille de coordonnée à partir des deux tableaux 1D x et y
-                         # X et Y sont des matrices 2D contenant les coordonnées x et y de chaque point du maillage
-                         # X contient les coordonnées x répétées en ligne
-                         # Y contient les coordonnées y répétées en colonne
+X, Y = np.meshgrid(x, y)
 
 # Coordonnées des noeuds
-nodes = np.vstack([X.ravel(), Y.ravel()]).T  # ravel() : transforme une matrice en un tableau ligne en mettant bout à bout les lignes de la matrice
-                                             # vstack() : empile les deux tableaux en une matrice (2 x N), la 1ère ligne contient les coordonnées x
-                                             #                                                           la 2ème ligne contient les coordonnées y
-
-                                             # T : prend la transposé, transormant la matrice en (N x 2), ou chaque ligne représente la coordonnée (x,y) d'un noeud
-
-#  (n3) ---- (n4)
-#    |  \     |
-#    |   \    |
-#    |    \   |
-#  (n1) ---- (n2)
+# nodes est une matrice de taille (NoN) x (Dim)
+nodes = np.vstack([X.ravel(), Y.ravel()]).T    # ravel() : transforme une matrice en un tableau ligne en mettant bout à bout les lignes de la matrice
+                                               # vstack() : empile les deux tableaux en une matrice (Dim x NoN), la 1ère ligne contient les coordonnées x
+                                               #                                                                 la 2ème ligne contient les coordonnées y
+                                               # T : prend la transposé, transormant la matrice en (NoN x Dim), ou chaque ligne représente la coordonnée (x,y) d'un noeud
 
 # Création des éléments triangulaires
 triangles = [] # stocke les indices des noeuds qui composent chaque élément triangulaire
-for i in range(Ny):      # parcourt les cellules...
-    for j in range(Nx):  # ... carrées formées par le maillage
+for i in range(Ny):      # parcourt l'axe des y
+    for j in range(Nx):  # parcourt l'axe des x
+    
         # Numérotations des noeuds
         n1 = i * (Nx + 1) + j   # coin bas-gauche
         n2 = n1 + 1             # coin bas-droit
@@ -82,19 +93,15 @@ for i in range(Ny):      # parcourt les cellules...
         triangles.append([n1, n2, n3])  # Premier triangle (bas-gauche)
         triangles.append([n2, n4, n3])  # Deuxième triangle (haut-droit)
 
+# Triangles est une matrice de taille (NoE)x(NnpE) , NoE : nombre d'éléments, NnpE : nombre de noeuds par élément
 triangles = np.array(triangles) # convertie la liste triangles en tableau
-
-
-nombre_triangles = triangles.shape[0] # element.shape retourne un tuple reprrsentant les dimensions du tableau
-                                      # shape[0] donne la taille de la première dimension, qui correspond au nombre de ligne
-nombre_nodes = (Nx + 1) * (Ny + 1)
 
 #=============================================================================#
 # Assemblage de la matrice de rigidité K
 #=============================================================================#
 
-K = np.zeros((nombre_nodes, nombre_nodes)) # Initialisation
-for i in range(nombre_triangles): # parcourt les éléments triangulaires
+K = np.zeros((NoN, NoN)) # Initialisation
+for i in range(NoT): # parcourt les éléments triangulaires
     #====================================
     # Selection des sommets composants le triangle i
     
@@ -142,8 +149,8 @@ for i in range(nombre_triangles): # parcourt les éléments triangulaires
 #=============================================================================#
 
 # Assemblage du vecteur de charge B
-B = np.zeros(nombre_nodes) # Initialisation
-for i in range(nombre_triangles):
+B = np.zeros(NoN) # Initialisation
+for i in range(NoT):
     #====================================
     # Selection des sommets composant le triangle i
     
@@ -217,21 +224,18 @@ for i, (xi, yi) in enumerate(nodes):
 #=============================
 # Assemblage du vecteur l : contribution des effets de bords
 
-l = np.zeros(nombre_nodes) # Initialisation
-for i in range(nombre_nodes): # la boucle parcours les noeuds
+l = np.zeros(NoN) # Initialisation
+for i in range(NoN): # la boucle parcourt les noeuds
     for j in boundary_nodes_gamma_1: # la boucle parcours les noeuds sur le bord gamma_1
         l[i] += u_1 * K[i, j]
-
-for i in range(nombre_nodes): # la boucle parcours les noeuds
+        
     for j in boundary_nodes_gamma_2: # la boucle parcours les noeuds sur le bord gamma_2
         l[i] += u_2 * K[i, j]
-
-for i in range(nombre_nodes): # la boucle parcours les noeuds
-    for j in boundary_nodes_gamma_3: # la boucle parcours les noeuds sur le bord gamma_2
-        l[i] += u_3 * K[i, j]
-
-for i in range(nombre_nodes): # la boucle parcours les noeuds
-    for j in boundary_nodes_gamma_4: # la boucle parcours les noeuds sur le bord gamma_2
+        
+    for j in boundary_nodes_gamma_3: # la boucle parcours les noeuds sur le bord gamma_3
+         l[i] += u_3 * K[i, j]
+         
+    for j in boundary_nodes_gamma_4: # la boucle parcours les noeuds sur le bord gamma_4
         l[i] += u_4 * K[i, j]
     
 #=============================
@@ -248,11 +252,11 @@ K_sparse = csr_matrix(K_int)
 
 w_int = spsolve(K_int, L_int)
 
-w = np.zeros(nombre_nodes)
+w = np.zeros(NoN)
 w[interior_nodes] = w_int
 
 # Définition du vecteur u_tilde 
-u_tilde = np.zeros(nombre_nodes)
+u_tilde = np.zeros(NoN)
 u_tilde[boundary_nodes_gamma_1] = u_1
 u_tilde[boundary_nodes_gamma_2] = u_2
 u_tilde[boundary_nodes_gamma_3] = u_3

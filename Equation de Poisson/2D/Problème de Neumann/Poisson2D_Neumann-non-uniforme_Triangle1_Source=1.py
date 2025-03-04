@@ -6,25 +6,23 @@ Created on Sun Feb 16 17:33:11 2025
 @author: nicolas-fournie
 """
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Sun Feb 16 16:41:00 2025
-
-@author: nicolas-fournie
-"""
-
-"""
-Equation de Laplace 2D : -Δu(x,y) = 1 sur Ω = [0,1]x[0,1] ;
+Equation de Laplace 2D :
+                           -Δu(x,y) = 1 sur Ω = [0,lx]x[0,ly] ;
+                           
 avec problème de Neumann non-uniforme :
-    - u'(x,y) = g_1 sur Gamma_1 = {(x, y) in Ω | (x=0, y)}
-    - u'(x,y) = g_2 sur Gamma_2 = {(x, y) in Ω | (x=1, y)}
-    - u'(x,y) = g_3 sur Gamma_3 = {(x, y) in Ω | (x, y=1)}
-    - u'(x,y) = g_4 sur Gamma_4 = {(x, y) in Ω | (x, y=0)}
     
-ou u' désigne la dérivée de la fonction u par rapport au vecteur n normal au bord.
+    - ∂u/∂n(x,y) = g_1 sur Gamma_1 = {(x, y) in Ω | (x=0, y)}
+    
+    - ∂u/∂n(x,y) = g_2 sur Gamma_2 = {(x, y) in Ω | (x=lx, y)}
+    
+    - ∂u/∂n(x,y) = g_3 sur Gamma_3 = {(x, y) in Ω | (x, y=ly)}
+    
+    - ∂u/∂n(x,y) = g_4 sur Gamma_4 = {(x, y) in Ω | (x, y=0)}
+    
+n vecteur normal au bord.
 
-La relation de compatibilité est : g_1 + g_2 + g_3 + g_4 = -A , ou A est l'aire du domaine de définition i.e 1.
+La relation de compatibilité est : g_1 + g_2 + g_3 + g_4 = -A , ou A est l'aire du domaine Ω.
 """
 
 import numpy as np
@@ -35,42 +33,61 @@ from scipy.sparse import csr_matrix
 #=============================================================================#
 # Paramètre du problème
 #=============================================================================#
-lx, ly = 4, 1
-A = lx * ly
+
+#======================
+# Paramètre du maillage
+Nx, Ny = 50, 50  # Nombre de divisions dans chaque direction
+lx, ly = 1, 1    # Longueur des axes x, (resp. y)
+A = lx * ly      # Aire du domaine
+
+NoN = (Nx + 1) * (Ny + 1) # Nombre de noeuds
+NoT = 2 * Nx * Ny # Nombre d'éléments
+NnpE = 3 # Nombre de noeud par élément
+Dim = 2 # Dimension du maillage
+#======================
+
+#=================================
+# paramètre du problème de Neumann
 g_1 = -2
 g_2 = -2
 g_3 = -4
 g_4 = -A - g_1 - g_2 - g_3
+#=================================
 
 #=============================================================================#
 # Définition du maillage
 #=============================================================================#
-Nx, Ny = 100, 100  # Nombre de divisions dans chaque direction
+
+###################
+#  (n3) ---- (n4) #
+#    |  \     |   #
+#    |   \    |   #
+#    |    \   |   #
+#  (n1) ---- (n2) #
+###################
+
+# Génère une grille de coordonnée à partir des deux tableaux x et y.
+# X et Y sont des matrices de taille (Ny+1)x(Nx+1) contenant les coordonnées x et y de chaque point du maillage.
+#
+# -  X contient les coordonnées x répétées en ligne
+# 
+# -  Y contient les coordonnées y répétées en colonne
 x = np.linspace(0, lx, Nx + 1)
 y = np.linspace(0, ly, Ny + 1)
-
-X, Y = np.meshgrid(x, y) # génère une grille de coordonnée à partir des deux tableaux 1D x et y
-                         # X et Y sont des matrices 2D contenant les coordonnées x et y de chaque point du maillage
-                         # X contient les coordonnées x répétées en ligne
-                         # Y contient les coordonnées y répétées en colonne
+X, Y = np.meshgrid(x, y)
 
 # Coordonnées des noeuds
-nodes = np.vstack([X.ravel(), Y.ravel()]).T  # ravel() : transforme une matrice en un tableau ligne en mettant bout à bout les lignes de la matrice
-                                             # vstack() : empile les deux tableaux en une matrice (2 x N), la 1ère ligne contient les coordonnées x
-                                             #                                                           la 2ème ligne contient les coordonnées y
-
-                                             # T : prend la transposé, transormant la matrice en (N x 2), ou chaque ligne représente la coordonnée (x,y) d'un noeud
-
-#  (n3) ---- (n4)
-#    |  \     |
-#    |   \    |
-#    |    \   |
-#  (n1) ---- (n2)
+# nodes est une matrice de taille (NoN) x (Dim)
+nodes = np.vstack([X.ravel(), Y.ravel()]).T    # ravel() : transforme une matrice en un tableau ligne en mettant bout à bout les lignes de la matrice
+                                               # vstack() : empile les deux tableaux en une matrice (Dim x NoN), la 1ère ligne contient les coordonnées x
+                                               #                                                                 la 2ème ligne contient les coordonnées y
+                                               # T : prend la transposé, transormant la matrice en (NoN x Dim), ou chaque ligne représente la coordonnée (x,y) d'un noeud
 
 # Création des éléments triangulaires
 triangles = [] # stocke les indices des noeuds qui composent chaque élément triangulaire
-for i in range(Ny):      # parcourt les cellules...
-    for j in range(Nx):  # ... carrées formées par le maillage
+for i in range(Ny):      # parcourt l'axe des y
+    for j in range(Nx):  # parcourt l'axe des x
+    
         # Numérotations des noeuds
         n1 = i * (Nx + 1) + j   # coin bas-gauche
         n2 = n1 + 1             # coin bas-droit
@@ -81,19 +98,15 @@ for i in range(Ny):      # parcourt les cellules...
         triangles.append([n1, n2, n3])  # Premier triangle (bas-gauche)
         triangles.append([n2, n4, n3])  # Deuxième triangle (haut-droit)
 
+# Triangles est une matrice de taille (NoE)x(NnpE) , NoE : nombre d'éléments, NnpE : nombre de noeuds par élément
 triangles = np.array(triangles) # convertie la liste triangles en tableau
-
-
-nombre_triangles = triangles.shape[0] # element.shape retourne un tuple reprrsentant les dimensions du tableau
-                                      # shape[0] donne la taille de la première dimension, qui correspond au nombre de ligne
-nombre_nodes = (Nx + 1) * (Ny + 1)
 
 #=============================================================================#
 # Assemblage de la matrice de rigidité K
 #=============================================================================#
 
-K = np.zeros((nombre_nodes, nombre_nodes)) # Initialisation
-for i in range(nombre_triangles): # parcourt les éléments triangulaires
+K = np.zeros((NoN, NoN)) # Initialisation
+for i in range(NoT): # parcourt les éléments triangulaires
     #====================================
     # Selection des sommets composants le triangle i
     
@@ -141,8 +154,8 @@ for i in range(nombre_triangles): # parcourt les éléments triangulaires
 #=============================================================================#
 
 # Assemblage du vecteur de charge : contribution de la source f(x)
-B = np.zeros(nombre_nodes) # Initialisation
-for i in range(nombre_triangles):
+B = np.zeros(NoN) # Initialisation
+for i in range(NoT):
     #====================================
     # Selection des sommets composant le triangle i
     
@@ -173,8 +186,8 @@ for i in range(nombre_triangles):
 # Prise en compte des conditions aux limites (CL) par substitution
 #=============================================================================#
 
-# Identification des nœuds de bord et intérieurs.
-# On considère comme nœuds de bord ceux dont l'une des coordonnées est égale à 0 ou 1
+# Identification des noeuds de bord et intérieurs.
+# On considère comme noeuds de bord ceux dont la coordonnée x est égale à 0 ou lx (resp. y est égale à 0 ou ly)
 
 tol = 1e-10
 interior_nodes = []
@@ -185,7 +198,7 @@ boundary_nodes_gamma_3 = []
 boundary_nodes_gamma_4 = []
 
 for i, (xi, yi) in enumerate(nodes):
-    is_boundary = False  # On suppose d'abord que le nœud est intérieur
+    is_boundary = False  # On suppose d'abord que le noeud est intérieur
     if (xi < tol):
         boundary_nodes_gamma_1.append(i)
         is_boundary = True
@@ -201,14 +214,14 @@ for i, (xi, yi) in enumerate(nodes):
     if not is_boundary:
         interior_nodes.append(i)
 
-# Prise en compte des conditions de Neumann :
+# Prise en compte des conditions de Neumann : la contribution de Neumann se répartit uniformément sur tous les noeuds composants les bords
 B[boundary_nodes_gamma_1] += g_1/ Ny
 B[boundary_nodes_gamma_2] += g_2/ Ny
 B[boundary_nodes_gamma_3] += g_3/ Nx
 B[boundary_nodes_gamma_4] += g_3/ Nx
 
 # Normalisation pour un problème bien posé
-K[0, :] = np.ones(nombre_nodes) / nombre_nodes
+K[0, :] = np.ones(NoN) / NoN
 B[0] = 1
 
 K_sparse = csr_matrix(K)
@@ -219,7 +232,6 @@ u = spsolve(K_sparse, B)
 # =============================================================================
 plt.figure(figsize=(6,5))
 
-# Tracé par éléments finis avec une interpolation sur les triangles
 # Tracé par éléments finis avec une interpolation sur les triangles
 plt.tricontourf(nodes[:,0], nodes[:,1], triangles, u,
                 cmap='inferno', # plasma, inferno, magma

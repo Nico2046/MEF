@@ -22,7 +22,6 @@ from scipy.sparse import csr_matrix
 #=============================================================================#
 # Parametres du problème
 #=============================================================================#
-
 E = 3 # Nombre d'elements
 n = E + 1 # Nombre de noeuds
 

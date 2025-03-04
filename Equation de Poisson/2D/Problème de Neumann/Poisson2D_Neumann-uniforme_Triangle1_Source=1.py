@@ -7,22 +7,27 @@ Created on Sun Feb 16 16:41:00 2025
 """
 
 """
-Equation de Laplace 2D : -Δu(x,y) = 1 sur Ω = [0,1]x[0,1] ;
-avec problème de Neumann : u'(x,y) = g sur drond Ω ,
-ou u' désigne la dérivée de la fonction u par rapport au vecteur n normal au bord.
+Equation de Laplace 2D :
+                              -Δu(x,y) = 1 sur Ω = [0,lx]x[0,ly] ;
+                              
+avec problème de Neumann uniforme : ∂u/∂n(x,y) = g sur ∂Ω , ou n est le vecteur normal au bord.
 
-La relation de compatibilité est : g = -A/4 , ou A est l'aire du domaine de définition i.e 1.
+La relation de compatibilité est : g = -A/4 , ou A est l'aire du domaine Ω.
 
 Pour un problème de Neumann pur, la solution de l'équation de Poisson est définie à une constante additive près. Il y a donc une infinité de solutions
 qui diffèrent seulement par une constante. Pour rendre le problème bien posé et obtenir une solution unique, il faut ajouter une contrainte
 supplémentaire. Une méthode courante consiste à fixer la moyenne de la solution sur le domaine, par exemple :
-    (1/ nombre de noeuds) * Sum_{i=1}^{nombre de noeuds} u_i = 0 ;
+    
+                     (1/ nombre de noeuds) * Sum_{i=1}^{nombre de noeuds} u_i = 0 ;
+                     
 cette contrainte élimine l'ambiguïté due à l'infinité de solutions définies à une constante près.
 
 Dans la pratique, pour imposer cette condition dans la résolution du système linéaire, on remplace l'une des équations (souvent la première)
 par l'équation de normalisation. Cela se traduit par :
+    
     - K[0, :] = np.ones(nombre_nodes) / nombre_nodes : modifie la première ligne de la matrice K, de sorte que l'équation correspondante soit celle
                                                        définie plus haut.
+                                                       
     - B[0] = 0 : fixe le côté droit de l'équation de normalisation à zéro, imposant ainsi que la moyenne de u soit nulle
 """
 
@@ -32,39 +37,50 @@ from scipy.sparse.linalg import spsolve
 from scipy.sparse import csr_matrix
 
 #=============================================================================#
-# Paramètre du problème
+# Paramètre du problème de Neumann
 #=============================================================================#
 g = -1/4
 #=============================================================================#
 # Définition du maillage
 #=============================================================================#
-Nx, Ny = 100, 100  # Nombre de divisions dans chaque direction
-lx, ly = 1, 1
+
+###################
+#  (n3) ---- (n4) #
+#    |  \     |   #
+#    |   \    |   #
+#    |    \   |   #
+#  (n1) ---- (n2) #
+###################
+
+Nx, Ny = 50, 50  # Nombre de divisions dans chaque direction
+lx, ly = 1, 1 # Longueur des axes x, (resp. y)
+NoN = (Nx + 1) * (Ny + 1) # Nombre de noeuds
+NoT = 2 * Nx * Ny # Nombre d'éléments
+NnpE = 3 # Nombre de noeud par élément
+Dim = 2 # Dimension du maillage
+
+# Génère une grille de coordonnée à partir des deux tableaux x et y.
+# X et Y sont des matrices de taille (Ny+1)x(Nx+1) contenant les coordonnées x et y de chaque point du maillage.
+#
+# -  X contient les coordonnées x répétées en ligne
+# 
+# -  Y contient les coordonnées y répétées en colonne
 x = np.linspace(0, lx, Nx + 1)
 y = np.linspace(0, ly, Ny + 1)
-
-X, Y = np.meshgrid(x, y) # génère une grille de coordonnée à partir des deux tableaux 1D x et y
-                         # X et Y sont des matrices 2D contenant les coordonnées x et y de chaque point du maillage
-                         # X contient les coordonnées x répétées en ligne
-                         # Y contient les coordonnées y répétées en colonne
+X, Y = np.meshgrid(x, y)
 
 # Coordonnées des noeuds
-nodes = np.vstack([X.ravel(), Y.ravel()]).T  # ravel() : transforme une matrice en un tableau ligne en mettant bout à bout les lignes de la matrice
-                                             # vstack() : empile les deux tableaux en une matrice (2 x N), la 1ère ligne contient les coordonnées x
-                                             #                                                           la 2ème ligne contient les coordonnées y
-
-                                             # T : prend la transposé, transormant la matrice en (N x 2), ou chaque ligne représente la coordonnée (x,y) d'un noeud
-
-#  (n3) ---- (n4)
-#    |  \     |
-#    |   \    |
-#    |    \   |
-#  (n1) ---- (n2)
+# nodes est une matrice de taille (NoN) x (Dim)
+nodes = np.vstack([X.ravel(), Y.ravel()]).T    # ravel() : transforme une matrice en un tableau ligne en mettant bout à bout les lignes de la matrice
+                                               # vstack() : empile les deux tableaux en une matrice (Dim x NoN), la 1ère ligne contient les coordonnées x
+                                               #                                                                 la 2ème ligne contient les coordonnées y
+                                               # T : prend la transposé, transormant la matrice en (NoN x Dim), ou chaque ligne représente la coordonnée (x,y) d'un noeud
 
 # Création des éléments triangulaires
 triangles = [] # stocke les indices des noeuds qui composent chaque élément triangulaire
-for i in range(Ny):      # parcourt les cellules...
-    for j in range(Nx):  # ... carrées formées par le maillage
+for i in range(Ny):      # parcourt l'axe des y
+    for j in range(Nx):  # parcourt l'axe des x
+    
         # Numérotations des noeuds
         n1 = i * (Nx + 1) + j   # coin bas-gauche
         n2 = n1 + 1             # coin bas-droit
@@ -75,17 +91,15 @@ for i in range(Ny):      # parcourt les cellules...
         triangles.append([n1, n2, n3])  # Premier triangle (bas-gauche)
         triangles.append([n2, n4, n3])  # Deuxième triangle (haut-droit)
 
+# Triangles est une matrice de taille (NoE)x(NnpE) , NoE : nombre d'éléments, NnpE : nombre de noeuds par élément
 triangles = np.array(triangles) # convertie la liste triangles en tableau
-nombre_triangles = triangles.shape[0] # element.shape retourne un tuple reprrsentant les dimensions du tableau
-                                      # shape[0] donne la taille de la première dimension, qui correspond au nombre de ligne
-nombre_nodes = (Nx + 1) * (Ny + 1)
 
 #=============================================================================#
 # Assemblage de la matrice de rigidité K
 #=============================================================================#
 
-K = np.zeros((nombre_nodes, nombre_nodes)) # Initialisation
-for i in range(nombre_triangles): # parcourt les éléments triangulaires
+K = np.zeros((NoN, NoN)) # Initialisation
+for i in range(NoT): # parcourt les éléments triangulaires
     #====================================
     # Selection des sommets composants le triangle i
     
@@ -133,8 +147,8 @@ for i in range(nombre_triangles): # parcourt les éléments triangulaires
 #=============================================================================#
 
 # Assemblage du vecteur de charge : contribution de la source f(x)
-B = np.zeros(nombre_nodes) # Initialisation
-for i in range(nombre_triangles):
+B = np.zeros(NoN) # Initialisation
+for i in range(NoT):
     #====================================
     # Selection des sommets composant le triangle i
     
@@ -165,7 +179,7 @@ for i in range(nombre_triangles):
 #=============================================================================#
 
 # Identification des nœuds de bord et intérieurs.
-# On considère comme nœuds de bord ceux dont l'une des coordonnées est égale à 0 ou 1
+# On considère comme noeuds de bord ceux dont la coordonnée x est égale à 0 ou lx (resp. y est égale à 0 ou ly)
 
 # Identification des nœuds de bord et intérieurs
 tol = 1e-10
@@ -174,7 +188,7 @@ boundary_nodes = [i for i, (xi, yi) in enumerate(nodes) if xi < tol or xi > lx -
 # Prise en compte des conditions de Neumann :
 #B[boundary_nodes] += g
 
-# Intégration de g sur le bord
+# Intégration de g sur le bord : la contribution de Neumann se répartit uniformément sur tous les noeuds composants les bords
 for i in boundary_nodes:
     xi, yi = nodes[i]
     if xi == 0 or xi == lx:
@@ -183,7 +197,7 @@ for i in boundary_nodes:
         B[i] += g * (1 / Nx)
 
 # Normalisation pour un problème de Neumann bien posé
-K[0, :] = np.ones(nombre_nodes) / nombre_nodes
+K[0, :] = np.ones(NoN) / NoN
 B[0] = 1 # ici on impose que la moyenne de u est 1
 
 K_sparse = csr_matrix(K)

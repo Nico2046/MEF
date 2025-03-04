@@ -6,6 +6,11 @@ Created on Thu Feb 27 17:08:18 2025
 @author: nicolas-fournie
 """
 
+"""
+Equation de Poisson 3D : -Δu(x,y,z) = 1 sur Ω = [0, lx]x[0, ly]x[0, lz] ;
+avec problème de Dirichlet homogene : u = 0 sur ∂Ω
+"""
+
 import numpy as np
 from scipy.sparse.linalg import spsolve
 from scipy.sparse import csr_matrix
@@ -16,7 +21,8 @@ import pyvista as pv
 #=============================================================================#
 
 Nx, Ny, Nz = 20, 20, 20  # Nombre de divisions dans chaque direction
-lx, ly, lz = 4, 2, 1
+lx, ly, lz = 4, 2, 1 # Longueur des axes x, y et z
+
 x = np.linspace(0, lx, Nx + 1)
 y = np.linspace(0, ly, Ny + 1)
 z = np.linspace(0, lz, Nz + 1)
@@ -24,11 +30,7 @@ z = np.linspace(0, lz, Nz + 1)
 X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
 
 # Coordonnées des noeuds
-nodes = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T  # ravel() : transforme une matrice en un tableau ligne en mettant bout à bout les lignes de la matrice
-                                             # vstack() : empile les deux tableaux en une matrice 2 x N, la 1ère ligne contient les coordonnées x
-                                             #                                                           la 2ème ligne contient les coordonnées y
-
-                                             # T : prend la transposé, transormant la matrice en N x 2, ou chaque ligne représente la coordonnée (x,y) d'un noeud
+nodes = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
                                              
 # Création des éléments tétraèdriques
 tetrahedra = [] # stocke les indices des noeuds qui composent chaque élément tétraèdrique
@@ -58,7 +60,7 @@ for i in range(Nx):
 tetrahedra = np.array(tetrahedra)
 
 number_tetrahedra = tetrahedra.shape[0] # element.shape retourne un tuple reprrsentant les dimensions du tableau
-                                      # shape[0] donne la taille de la première dimension, qui correspond au nombre de ligne
+                                        # shape[0] donne la taille de la première dimension, qui correspond au nombre de ligne
 
 number_nodes = (Nx + 1) * (Ny + 1) * (Nz + 1)
 

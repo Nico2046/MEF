@@ -7,7 +7,9 @@ Created on Sun Feb  2 20:40:34 2025
 """
 
 """
-Equation de Poisson 1D :  -u''(x) = f(x) : sur [0, L] avec f(x) = 1
+Equation de Poisson 1D :
+                              -u''(x) = f(x) : sur [0, L] avec f(x) = 1
+                              
 Problème de Dirichlet : u(0) = u_0 et u(L) = u_L
 """
 

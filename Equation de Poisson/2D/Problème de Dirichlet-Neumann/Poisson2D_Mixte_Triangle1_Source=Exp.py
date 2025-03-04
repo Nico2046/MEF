@@ -7,18 +7,20 @@ Created on Tue Feb 25 15:20:06 2025
 """
 
 """
-Equation de Poisson 2D : -Δu(x,y) = f(x,y) sur Ω = [0,1]x[0,1] ;
+Equation de Poisson 2D :
+                              -Δu(x,y) = f(x,y) sur Ω = [0,lx]x[0,ly] ;
+                              
 avec problème de Dirichlet-Neumann :
     
     - Dirichlet :
     
         - u(x,y) = u_1 sur Gamma_1 = {(x, y) in Ω | (x=0, y)}
         
-        - u(x,y) = u_2 sur Gamma_2 = {(x, y) in Ω | (x=1, y)}
+        - u(x,y) = u_2 sur Gamma_2 = {(x, y) in Ω | (x=lx, y)}
         
     - Neumann :
         
-        - ∂u/∂n(x,y) = g_3 sur Gamma_3 = {(x, y) in Ω | (x, y=1)}
+        - ∂u/∂n(x,y) = g_3 sur Gamma_3 = {(x, y) in Ω | (x, y=ly)}
         
         - ∂u/∂n(x,y) = g_4 sur Gamma_4 = {(x, y) in Ω | (x, y=0)}
         
