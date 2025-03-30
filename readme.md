@@ -16,8 +16,8 @@ Le projet traite la résolution de l'équation de Poisson en considérant trois 
 Les particularités pour chaque dimension sont les suivantes :  
 
 - 1D : Résolution de l'équation sur une dimension.  
-- 2D : Utilisation d'un maillage triangulaire régulier pour la résolution sur un domaine bidimensionnel.  
-- 3D : Utilisation d'un maillage tétraédrique régulier pour la résolution dans l'espace. Pour ce cas, une visualisation graphique de la solution est réalisée grâce à la librairie [PyVista](https://docs.pyvista.org/).  
+- 2D : Utilisation d'un maillage triangulaire régulier pour la résolution sur un domaine bidimensionnel rectangulaire.  
+- 3D : Utilisation d'un maillage tétraédrique régulier pour la résolution dans l'espace sur un domaine parallélépipédique. Pour ce cas, une visualisation graphique de la solution est réalisée grâce à la librairie [PyVista](https://docs.pyvista.org/).  
 
 ## Installation et Utilisation (Cas 3D avec PyVista)
 
