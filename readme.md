@@ -7,11 +7,12 @@ Ce repository présente un projet personnel de résolution de l'équation de Poi
 
 ## Description du Projet
 
-Le projet traite la résolution de l'équation de Poisson en considérant trois types de conditions aux limites :  
+Le projet traite la résolution de l'équation de Poisson en considérant quatres types de conditions aux limites :  
 
 - Dirichlet  
 - Neumann  
-- Mixte Dirichlet-Neumann  
+- Mixte Dirichlet-Neumann 
+- Robin 
 
 Les particularités pour chaque dimension sont les suivantes :  
 
