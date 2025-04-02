@@ -3,7 +3,7 @@
 Ce repository présente un projet personnel de résolution de l'équation de Poisson en 1D, 2D et 3D par la méthode des éléments finis (MEF). L'objectif est de découvrir et expérimenter avec Python pour implémenter cette méthode.
 
 ![texte](Images/image.png)
-<img src="Images/Poisson3D.png" alt="Description" style="width: 425px;">
+<img src="Images/Poisson3D_homogene.png" alt="Description" style="width: 425px;">
 
 ## Description du Projet
 
