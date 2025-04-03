@@ -15,15 +15,15 @@ import pyvista as pv
 Equation de Poisson 3D : -Δu(x,y,z) = 1 sur Ω = [0,lx]x[0,ly]x[0,lz] ;
 avec problème de Neumann non-uniforme :
     
-    - ∂u/∂n = g_1 sur Gamma_1 = {(x, y, z) in Ω | (x, y=1, z)}
+    - ∂u/∂n = g_1 sur Gamma_1 = {(x, y, z) in Ω | (x, y=ly, z)}
     
     - ∂u/∂n = g_2 sur Gamma_2 = {(x, y, z) in Ω | (x, y=0, z)}
     
     - ∂u/∂n = g_3 sur Gamma_3 = {(x, y, z) in Ω | (x=0, y, z)}
     
-    - ∂u/∂n = g_4 sur Gamma_4 = {(x, y, z) in Ω | (x=1, y, z)}
+    - ∂u/∂n = g_4 sur Gamma_4 = {(x, y, z) in Ω | (x=lx, y, z)}
     
-    - ∂u/∂n = g_5 sur Gamma_5 = {(x, y, z) in Ω | (x, y, z=1)}
+    - ∂u/∂n = g_5 sur Gamma_5 = {(x, y, z) in Ω | (x, y, z=lz)}
     
     - ∂u/∂n = g_6 sur Gamma_6 = {(x, y, z) in Ω | (x, y, z=0)}
 

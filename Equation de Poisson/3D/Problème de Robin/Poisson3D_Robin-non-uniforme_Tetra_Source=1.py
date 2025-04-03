@@ -11,15 +11,15 @@ Equation de Poisson 2D :
                            -Δu(x,y,z) = 1 sur Ω = ]0,lx[ x ]0,ly[ x ]0,lz[ ;
 avec problème de Robin :
     
-    - 𝜶_1 * u(x,y,z) + 𝛃_1 * ∂u/∂n(x,y,z) = g_1 sur Gamma_1 = {(x, y, z) in Ω | (x, y=1, z)}
+    - 𝜶_1 * u(x,y,z) + 𝛃_1 * ∂u/∂n(x,y,z) = g_1 sur Gamma_1 = {(x, y, z) in Ω | (x, y=ly, z)}
     
     - 𝜶_2 * u(x,y,z) + 𝛃_2 * ∂u/∂n(x,y,z) = g_2 sur Gamma_2 = {(x, y, z) in Ω | (x, y=0, z)}
     
     - 𝜶_3 * u(x,y,z) + 𝛃_3 * ∂u/∂n(x,y,z) = g_3 sur Gamma_3 = {(x, y, z) in Ω | (x=0, y, z)}
     
-    - 𝜶_4 * u(x,y,z) + 𝛃_4 * ∂u/∂n(x,y,z) = g_4 sur Gamma_4 = {(x, y, z) in Ω | (x=1, y, z)}
+    - 𝜶_4 * u(x,y,z) + 𝛃_4 * ∂u/∂n(x,y,z) = g_4 sur Gamma_4 = {(x, y, z) in Ω | (x=lx, y, z)}
     
-    - 𝜶_5 * u(x,y,z) + 𝛃_5 * ∂u/∂n(x,y,z) = g_5 sur Gamma_5 = {(x, y, z) in Ω | (x, y, z=1)}
+    - 𝜶_5 * u(x,y,z) + 𝛃_5 * ∂u/∂n(x,y,z) = g_5 sur Gamma_5 = {(x, y, z) in Ω | (x, y, z=lz)}
     
     - 𝜶_6 * u(x,y,z) + 𝛃_6 * ∂u/∂n(x,y,z) = g_6 sur Gamma_6 = {(x, y, z) in Ω | (x, y, z=0)}
 

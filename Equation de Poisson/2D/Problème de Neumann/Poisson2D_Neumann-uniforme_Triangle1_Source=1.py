@@ -39,7 +39,9 @@ from scipy.sparse import csr_matrix
 #=============================================================================#
 # Paramètre du problème de Neumann
 #=============================================================================#
-g = -1/4
+lx, ly = 1, 1 # Longueur des axes x, (resp. y)
+A = lx * ly
+g = -A/ 4
 #=============================================================================#
 # Définition du maillage
 #=============================================================================#
@@ -53,7 +55,6 @@ g = -1/4
 ###################
 
 Nx, Ny = 50, 50  # Nombre de divisions dans chaque direction
-lx, ly = 1, 1 # Longueur des axes x, (resp. y)
 NoN = (Nx + 1) * (Ny + 1) # Nombre de noeuds
 NoT = 2 * Nx * Ny # Nombre d'éléments
 NnpE = 3 # Nombre de noeud par élément
